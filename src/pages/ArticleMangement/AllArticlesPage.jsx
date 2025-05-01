@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import Lottie from 'react-lottie';
+import { XMarkIcon } from '@heroicons/react/24/outline';
+import loadingAnimationData from '../../assets/loading.json'; // Import your Lottie animation data
 
 const AllArticlesPage = () => {
   const [articles, setArticles] = useState([]);
@@ -14,6 +17,7 @@ const AllArticlesPage = () => {
     youtubeLink: '',
     featuredImage: null,
   });
+  const [fullArticle, setFullArticle] = useState(null); // State to show full article
 
   useEffect(() => {
     const fetchArticles = async () => {
@@ -103,10 +107,27 @@ const AllArticlesPage = () => {
     }
   };
 
+  const defaultOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: loadingAnimationData,
+    rendererSettings: {
+      preserveAspectRatio: 'xMidYMid meet',
+    },
+  };
+
+  const handleReadMore = (article) => {
+    setFullArticle(article);
+  };
+
+  const handleCloseFullArticle = () => {
+    setFullArticle(null);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full">
-        <p className="text-gray-500 text-lg">Loading articles...</p>
+        <Lottie options={defaultOptions} height={200} width={200} />
       </div>
     );
   }
@@ -124,6 +145,7 @@ const AllArticlesPage = () => {
       <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">Edit Article</h2>
         <form onSubmit={handleUpdate} className="grid grid-cols-1 gap-6">
+          {/* ... (Edit form remains the same) ... */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700">
               Title
@@ -247,6 +269,12 @@ const AllArticlesPage = () => {
                   <span className="text-sm text-gray-500">{article.category}</span>
                   <div className="flex space-x-2">
                     <button
+                      onClick={() => handleReadMore(article)}
+                      className="text-indigo-500 hover:text-indigo-700 text-sm font-medium"
+                    >
+                      Read More
+                    </button>
+                    <button
                       onClick={() => handleEdit(article)}
                       className="text-blue-500 hover:text-blue-700 text-sm font-medium"
                     >
@@ -263,6 +291,57 @@ const AllArticlesPage = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Full Article Modal */}
+      {fullArticle && (
+        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-8 max-w-3xl w-full relative">
+            <button
+              onClick={handleCloseFullArticle}
+              className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 focus:outline-none"
+            >
+              <XMarkIcon className="h-6 w-6" />
+            </button>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">{fullArticle.title}</h2>
+            {fullArticle.featuredImage && (
+              <img
+                src={fullArticle.featuredImage}
+                alt={fullArticle.title}
+                className="w-full rounded-md shadow-md mb-4"
+              />
+            )}
+            <p className="text-gray-700 leading-relaxed">{fullArticle.content}</p>
+            {fullArticle.youtubeLink && (
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">YouTube Video</h3>
+                {/* Basic handling of YouTube link - you might want to embed it properly */}
+                {fullArticle.youtubeLink.includes('embed') ? (
+                  <div className="aspect-w-16 aspect-h-9">
+                    <iframe
+                      className="w-full h-full rounded-md"
+                      src={fullArticle.youtubeLink}
+                      title="YouTube video player"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                ) : (
+                  <a
+                    href={fullArticle.youtubeLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    Watch on YouTube
+                  </a>
+                )}
+              </div>
+            )}
+            <p className="text-sm text-gray-500 mt-4">Category: {fullArticle.category}</p>
+          </div>
         </div>
       )}
     </div>
