@@ -5,7 +5,7 @@ import AllArticlesPage from './ArticleMangement/AllArticlesPage';
 import AddNewArticlePage from './ArticleMangement/AddNewArticlePage';
 import DraftsPage from './ArticleMangement/DraftsPage'; 
 import SponsorsPage from './SponsorsPage';
-// import BreakingNewsPage from './BreakingNewsPage';
+import BreakingNewsPage from './BreakingNewsPage';
 import PartnerPage from './PartnerPage';
 import Navbar from '../components/Navbar'; 
 const MainContent = () => (
@@ -19,9 +19,7 @@ const MainContent = () => (
         <Route path="/articles/drafts" element={<DraftsPage />} />
         <Route path="/sponsors" element={<SponsorsPage />} />
         <Route path="/partners" element={<PartnerPage />} /> 
-        {/* <
-        <Route path="/admin/breaking-news" element={<BreakingNewsPage />} />
-        */}
+        <Route path="/breaking-news" element={<BreakingNewsPage />} />
       </Routes>
     </div>
   </div>

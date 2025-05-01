@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
-import { PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, TrashIcon, PlusIcon, PhotoIcon } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
+import Lottie from 'react-lottie';
+import loadingAnimationData from '../assets/loading.json'; // Import your Lottie animation data
 
 const PartnerPage = () => {
   const [partners, setPartners] = useState([]);
@@ -11,10 +13,12 @@ const PartnerPage = () => {
     title: '',
     websiteLink: '',
     logo: null,
+    logoPreview: null,
   });
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const fetchPartners = async () => {
@@ -39,7 +43,33 @@ const PartnerPage = () => {
 
   const handleLogoChange = (e) => {
     const file = e.target.files[0];
-    setFormData((prev) => ({ ...prev, logo: file }));
+    if (file) {
+      setFormData((prev) => ({
+        ...prev,
+        logo: file,
+        logoPreview: URL.createObjectURL(file),
+      }));
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      setFormData((prev) => ({
+        ...prev,
+        logo: file,
+        logoPreview: URL.createObjectURL(file),
+      }));
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleFileInputClick = () => {
+    fileInputRef.current.click();
   };
 
   const handleCreateOrUpdate = async (e) => {
@@ -70,7 +100,7 @@ const PartnerPage = () => {
         setPartners((prev) => [...prev, response.data.data]);
       }
 
-      setFormData({ title: '', websiteLink: '', logo: null });
+      setFormData({ title: '', websiteLink: '', logo: null, logoPreview: null });
       setIsFormVisible(false);
       setIsEditing(false);
       setSelectedPartner(null);
@@ -86,6 +116,7 @@ const PartnerPage = () => {
       title: partner.title,
       websiteLink: partner.websiteLink,
       logo: null, // Reset the logo for editing
+      logoPreview: partner.logo,
     });
     setIsFormVisible(true);
     setIsEditing(true);
@@ -117,10 +148,19 @@ const PartnerPage = () => {
     visible: { opacity: 1, x: 0 },
   };
 
+  const defaultOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: loadingAnimationData,
+    rendererSettings: {
+      preserveAspectRatio: 'xMidYMid meet',
+    },
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full bg-gray-100">
-        <p className="text-gray-500 text-lg">Loading partners...</p>
+        <Lottie options={defaultOptions} height={150} width={150} />
       </div>
     );
   }
@@ -138,17 +178,17 @@ const PartnerPage = () => {
       <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <motion.div className="bg-white rounded-xl shadow-md overflow-hidden p-6" layout>
           <div className="mb-6 flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-yellow-700">Our Esteemed Partners</h2>
+            <h2 className="text-xl font-semibold text-gray-800">Our Esteemed Partners</h2>
             <button
               onClick={() => {
                 setIsFormVisible(true);
-                setFormData({ title: '', websiteLink: '', logo: null });
+                setFormData({ title: '', websiteLink: '', logo: null, logoPreview: null });
                 setIsEditing(false);
                 setSelectedPartner(null);
               }}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 transition-all duration-200"
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-semibold text-gray-800 bg-yellow-200 hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 transition-all duration-200"
             >
-              <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+              <PlusIcon className="-ml-1 mr-2 h-5 w-5 text-yellow-700" />
               Add Partner
             </button>
           </div>
@@ -162,9 +202,9 @@ const PartnerPage = () => {
                 animate="visible"
                 exit="exit"
                 variants={formVariants}
-                className="mb-8 p-6 bg-yellow-50 rounded-md border border-yellow-200 grid grid-cols-1 gap-4"
+                className="mb-8 p-6 bg-gray-50 rounded-md border border-gray-200 grid grid-cols-1 gap-4"
               >
-                <h3 className="text-lg font-semibold text-yellow-800 mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">
                   {isEditing ? 'Edit Partner' : 'Add New Partner'}
                 </h3>
                 <div>
@@ -177,7 +217,7 @@ const PartnerPage = () => {
                     name="title"
                     value={formData.title}
                     onChange={handleFormChange}
-                    className="mt-1 block w-full rounded-md border-yellow-300 shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm"
                     required
                   />
                 </div>
@@ -191,7 +231,7 @@ const PartnerPage = () => {
                     name="websiteLink"
                     value={formData.websiteLink}
                     onChange={handleFormChange}
-                    className="mt-1 block w-full rounded-md border-yellow-300 shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm"
                     required
                   />
                 </div>
@@ -199,23 +239,38 @@ const PartnerPage = () => {
                   <label htmlFor="logo" className="block text-sm font-medium text-gray-700">
                     Partner Logo
                   </label>
-                  <input
-                    type="file"
-                    id="logo"
-                    name="logo"
-                    onChange={handleLogoChange}
-                    className="mt-1 block w-full text-sm text-gray-500 border border-yellow-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500"
-                  />
-                  {isEditing && selectedPartner?.logo && !formData.logo && (
+                  <div
+                    className="mt-1 flex items-center justify-center w-full"
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onClick={handleFileInputClick}
+                    style={{ border: '2px dashed #ddd', borderRadius: '0.375rem', padding: '2rem', cursor: 'pointer' }}
+                  >
+                    {formData.logoPreview ? (
+                      <img src={formData.logoPreview} alt="Logo Preview" className="max-h-24 max-w-full rounded-md" />
+                    ) : (
+                      <PhotoIcon className="h-10 w-10 text-gray-400" />
+                    )}
+                    <input
+                      type="file"
+                      id="logo"
+                      name="logo"
+                      onChange={handleLogoChange}
+                      className="hidden"
+                      ref={fileInputRef}
+                    />
+                  </div>
+                  {isEditing && selectedPartner?.logo && !formData.logoPreview && (
                     <div className="mt-2">
                       <img
                         src={selectedPartner.logo}
                         alt="Current Logo"
-                        className="h-12 w-auto rounded-md"
+                        className="h-12 w-auto rounded-md shadow-sm"
                       />
                       <p className="text-xs text-gray-500">Current Logo</p>
                     </div>
                   )}
+                  <p className="text-xs text-gray-500 mt-1">Drag and drop an image here, or click to select files.</p>
                 </div>
                 <div className="flex justify-end">
                   <button
@@ -227,7 +282,7 @@ const PartnerPage = () => {
                   </button>
                   <button
                     type="submit"
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-all duration-200"
+                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-semibold text-gray-800 bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-all duration-200"
                   >
                     {isEditing ? 'Update Partner' : 'Add Partner'}
                   </button>
@@ -236,68 +291,72 @@ const PartnerPage = () => {
             )}
           </AnimatePresence>
 
-          <motion.div variants={tableVariants} initial="hidden" animate="visible" className="overflow-x-auto">
-            <table className="min-w-full leading-normal rounded-md shadow-sm border-collapse border border-gray-200">
-              <thead>
-                <tr className="bg-yellow-100 text-yellow-700">
-                  <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
-                    Logo
-                  </th>
-                  <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
-                    Partner Name
-                  </th>
-                  <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
-                    Website
-                  </th>
-                  <th className="px-5 py-3 border-b-2 border-gray-200 text-right text-xs font-semibold uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {partners.map((partner) => (
-                  <motion.tr key={partner._id} variants={rowVariants} className="hover:bg-yellow-50 transition-colors duration-200">
-                    <td className="px-5 py-3 border-b border-gray-200 text-sm">
-                      <img src={partner.logo} alt={partner.title} className="h-10 w-auto rounded-md shadow-sm" />
-                    </td>
-                    <td className="px-5 py-3 border-b border-gray-200 text-sm">
-                      <p className="text-gray-900 whitespace-no-wrap">{partner.title}</p>
-                    </td>
-                    <td className="px-5 py-3 border-b border-gray-200 text-sm">
-                      <a
-                        href={partner.websiteLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-yellow-500 hover:text-yellow-700"
-                      >
-                        Visit
-                      </a>
-                    </td>
-                    <td className="px-5 py-3 border-b border-gray-200 text-right text-sm">
-                      <div className="space-x-2">
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => handleEdit(partner)}
-                          className="text-blue-500 hover:text-blue-700 focus:outline-none"
+          {!isFormVisible && (
+            <motion.div variants={tableVariants} initial="hidden" animate="visible" className="overflow-x-auto">
+              <table className="min-w-full leading-normal rounded-md shadow-sm border-collapse border border-gray-200">
+                <thead>
+                  <tr className="bg-gray-100 text-gray-700">
+                    <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
+                      Logo
+                    </th>
+                    <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
+                      Partner Name
+                    </th>
+                    <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
+                      Website
+                    </th>
+                    <th className="px-5 py-3 border-b-2 border-gray-200 text-right text-xs font-semibold uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {partners.map((partner) => (
+                    <motion.tr key={partner._id} variants={rowVariants} className="hover:bg-gray-50 transition-colors duration-200">
+                      <td className="px-5 py-3 border-b border-gray-200 text-sm">
+                        <div className="relative w-12 h-12 rounded-md shadow-sm overflow-hidden">
+                          <img src={partner.logo} alt={partner.title} className="object-cover w-full h-full" />
+                        </div>
+                      </td>
+                      <td className="px-5 py-3 border-b border-gray-200 text-sm">
+                        <p className="text-gray-900 whitespace-no-wrap">{partner.title}</p>
+                      </td>
+                      <td className="px-5 py-3 border-b border-gray-200 text-sm">
+                        <a
+                          href={partner.websiteLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:text-blue-700"
                         >
-                          <PencilIcon className="h-5 w-5" />
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => handleDelete(partner._id)}
-                          className="text-red-500 hover:text-red-700 focus:outline-none"
-                        >
-                          <TrashIcon className="h-5 w-5" />
-                        </motion.button>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-          </motion.div>
+                          Visit
+                        </a>
+                      </td>
+                      <td className="px-5 py-3 border-b border-gray-200 text-right text-sm">
+                        <div className="space-x-2">
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => handleEdit(partner)}
+                            className="text-blue-500 hover:text-blue-700 focus:outline-none"
+                          >
+                            <PencilIcon className="h-5 w-5" />
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => handleDelete(partner._id)}
+                            className="text-red-500 hover:text-red-700 focus:outline-none"
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </motion.button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </motion.div>
+          )}
         </motion.div>
       </div>
     </div>
