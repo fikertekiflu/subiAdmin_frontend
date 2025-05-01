@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import Lottie from 'react-lottie';
+import { PencilIcon, TrashIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import loadingAnimationData from '../assets/loading.json'; // Import your Lottie animation data
 
 const SponsorsPage = () => {
   const [sponsors, setSponsors] = useState([]);
@@ -48,7 +51,6 @@ const SponsorsPage = () => {
           )
         );
       } else {
-        // Create sponsor
         const response = await axios.post('http://localhost:5000/api/sponsor', formData);
         setSponsors((prev) => [...prev, response.data.data]);
       }
@@ -56,7 +58,7 @@ const SponsorsPage = () => {
       setFormData({ title: '', description: '', youtubeIframe: '' });
       setIsEditing(false);
       setSelectedSponsor(null);
-      setShowAddForm(false); // Hide form after successful save
+      setShowAddForm(false);
     } catch (err) {
       console.error('Error saving sponsor:', err.response?.data || err.message);
       setError('Failed to save sponsor. Please try again.');
@@ -71,17 +73,17 @@ const SponsorsPage = () => {
       youtubeIframe: sponsor.youtubeIframe,
     });
     setIsEditing(true);
-    setShowAddForm(true); // Show form when editing
+    setShowAddForm(true);
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this sponsor?')) {
+    if (window.confirm('Are you sure you want to delete this ad?')) {
       try {
         await axios.delete(`http://localhost:5000/api/sponsor/${id}`);
         setSponsors((prev) => prev.filter((sponsor) => sponsor._id !== id));
       } catch (err) {
         console.error('Error deleting sponsor:', err.response?.data || err.message);
-        setError('Failed to delete sponsor. Please try again.');
+        setError('Failed to delete ad. Please try again.');
       }
     }
   };
@@ -100,22 +102,34 @@ const SponsorsPage = () => {
     setShowAddForm(false);
   };
 
+  const defaultOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: loadingAnimationData,
+    rendererSettings: {
+      preserveAspectRatio: 'xMidYMid meet',
+    },
+  };
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-full bg-gray-50">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-500"></div>
-        <p className="ml-3 text-gray-600 text-lg">Loading Ads...</p>
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <Lottie options={defaultOptions} height={200} width={200} />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex justify-center items-center h-full bg-gray-50">
-        <svg className="w-6 h-6 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-        <p className="text-red-500 text-lg">{error}</p>
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <div className="bg-white shadow overflow-hidden sm:rounded-lg p-8">
+          <div className="flex items-center justify-center">
+            <svg className="w-6 h-6 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p className="text-red-500 text-lg">{error}</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -123,39 +137,45 @@ const SponsorsPage = () => {
   return (
     <div className="bg-gray-100 min-h-screen py-10">
       <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <div className="px-6 py-5 bg-gray-100 border-b border-gray-200 flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-800">Manage Ads</h2>
+        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          <div className="px-6 py-5 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+            <h2 className="text-xl font-semibold text-gray-900">Manage Ads</h2>
             {!showAddForm && (
               <button
                 onClick={handleShowAddForm}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 transition-all duration-300"
               >
-                <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
+                <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
                 Add New Ad
               </button>
             )}
           </div>
           <div className="p-6">
-            {showAddForm && (
-              <div className="mb-8 p-6 bg-gray-50 rounded-md border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                  {isEditing ? 'Edit Sponsor' : 'Add New Sponsor'}
+            <div
+              className={`mb-8 p-6 bg-gray-50 rounded-md border border-gray-200 transition-all duration-300 overflow-hidden ${
+                showAddForm ? 'opacity-100 max-h-96' : 'opacity-0 max-h-0'
+              }`}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  {isEditing ? 'Edit Ad' : 'Add New Ad'}
                 </h3>
-                <form onSubmit={handleCreateOrUpdate} className="grid grid-cols-1 gap-6">
-                  <div>
-                    <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                      Title
-                    </label>
-                    <input
+                <button onClick={handleCancelEdit} className="text-gray-500 hover:text-gray-700 focus:outline-none">
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+              <form onSubmit={handleCreateOrUpdate} className="grid grid-cols-1 gap-4">
+                <div>
+                  <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+                    Title
+                  </label>
+                  <input
                     type="text"
                     id="title"
                     name="title"
                     value={formData.title}
                     onChange={handleFormChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm"
                     required
                   />
                 </div>
@@ -166,10 +186,10 @@ const SponsorsPage = () => {
                   <textarea
                     id="description"
                     name="description"
-                    rows="4"
+                    rows="3"
                     value={formData.description}
                     onChange={handleFormChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm"
                     required
                   ></textarea>
                 </div>
@@ -183,79 +203,69 @@ const SponsorsPage = () => {
                     rows="3"
                     value={formData.youtubeIframe}
                     onChange={handleFormChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm"
                     placeholder="<iframe src='...'></iframe>"
                     required
                   ></textarea>
                 </div>
                 <div className="flex justify-end">
-                  {isEditing && (
-                    <button
-                      type="button"
-                      onClick={handleCancelEdit}
-                      className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-500 mr-2"
-                    >
-                      Cancel
-                    </button>
-                  )}
                   <button
                     type="submit"
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-all duration-300"
                   >
-                    {isEditing ? 'Update Sponsor' : 'Add Sponsor'}
+                    {isEditing ? 'Update Ad' : 'Add Ad'}
                   </button>
                 </div>
               </form>
             </div>
-          )}
 
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Current Ads</h2>
-          {sponsors.length === 0 ? (
-            <p className="text-gray-500">No Ads available.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sponsors.map((sponsor) => (
-                <div
-                  key={sponsor._id}
-                  className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200"
-                >
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">{sponsor.title}</h3>
-                    <p className="text-sm text-gray-600 mb-3">{sponsor.description}</p>
-                    <div
-                      className="aspect-w-16 aspect-h-9 rounded-md overflow-hidden"
-                      dangerouslySetInnerHTML={{ __html: sponsor.youtubeIframe }}
-                    ></div>
-                    <div className="mt-4 flex justify-end space-x-2">
-                      <button
-                        onClick={() => handleEdit(sponsor)}
-                        className="inline-flex items-center px-3 py-2 border border-blue-500 text-blue-500 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded-md text-sm font-medium"
+            {showAddForm ? null : (
+              <>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Current Ads</h2>
+                {sponsors.length === 0 ? (
+                  <p className="text-gray-500">No ads available yet.</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {sponsors.map((sponsor) => (
+                      <div
+                        key={sponsor._id}
+                        className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 transition-all duration-300"
                       >
-                        <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15.828 10 13.999l-2.828 2.828a2 2 0 11-2.828-2.828L8.172 10.172 10 12.001l2.828-2.828z" />
-                        </svg>
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(sponsor._id)}
-                        className="inline-flex items-center px-3 py-2 border border-red-500 text-red-500 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded-md text-sm font-medium"
-                      >
-                        <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        Delete
-                      </button>
-                    </div>
+                        <div className="p-4">
+                          <h3 className="text-lg font-semibold text-gray-800 mb-2">{sponsor.title}</h3>
+                          <p className="text-sm text-gray-600 mb-3">{sponsor.description}</p>
+                          <div
+                            className="aspect-w-16 aspect-h-9 rounded-md overflow-hidden"
+                            dangerouslySetInnerHTML={{ __html: sponsor.youtubeIframe }}
+                          ></div>
+                          <div className="mt-4 flex justify-end space-x-2">
+                            <button
+                              onClick={() => handleEdit(sponsor)}
+                              className="inline-flex items-center px-3 py-2 border border-yellow-500 text-yellow-500 hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-1 rounded-md text-sm font-medium transition-all duration-300"
+                            >
+                              <PencilIcon className="-ml-1 mr-2 h-5 w-5" />
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(sponsor._id)}
+                              className="inline-flex items-center px-3 py-2 border border-red-500 text-red-500 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded-md text-sm font-medium transition-all duration-300"
+                            >
+                              <TrashIcon className="-ml-1 mr-2 h-5 w-5" />
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default SponsorsPage;
