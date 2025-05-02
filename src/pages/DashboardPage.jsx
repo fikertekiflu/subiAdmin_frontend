@@ -7,14 +7,13 @@ import {
     BellAlertIcon,
     TagIcon,
     PlusIcon,
+    ChartBarIcon,
+    LightBulbIcon,
+    UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import Lottie from 'react-lottie';
-import loadingAnimation from '../assets/loading.json';
-import { Chart as ChartJS, LineElement, PointElement, LinearScale, Tooltip, CategoryScale } from 'chart.js';
-import { Line } from 'react-chartjs-2';
-
-ChartJS.register(LineElement, PointElement, LinearScale, Tooltip, CategoryScale);
+import loadingAnimation from '../assets/loading.json'; // Adjust path if needed
 
 const DashboardPage = () => {
     const [totalArticles, setTotalArticles] = useState(0);
@@ -59,95 +58,83 @@ const DashboardPage = () => {
         navigate('/admin/articles/new');
     };
 
-    const OverviewCard = ({ label, value, trendData, color }) => {
-        const chartOptions = {
-            plugins: {
-                legend: {
-                    display: false,
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    backgroundColor: '#fff',
-                    titleColor: '#374151',
-                    bodyColor: '#4b5563',
-                    borderColor: color,
-                    borderWidth: 1,
-                    displayColors: false,
-                    callbacks: {
-                        label: (context) => `Value: ${context.formattedValue}`,
-                    },
-                },
-            },
-            scales: {
-                x: {
-                    display: false,
-                },
-                y: {
-                    display: false,
-                    beginAtZero: true,
-                },
-            },
-            elements: {
-                line: {
-                    shadowColor: 'rgba(0, 0, 0, 0.05)',
-                    shadowBlur: 10,
-                },
-            },
-        };
+    const generateSVGPath = (data, color, width = 100, height = 30) => {
+        if (!data || data.length < 2) return '';
 
-        const chartData = {
-            labels: Array.from({ length: trendData.length }, (_, i) => ''),
-            datasets: [
-                {
-                    label: '',
-                    data: trendData,
-                    borderColor: color,
-                    backgroundColor: (chart) => {
-                        const ctx = chart.chart.ctx;
-                        const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-                        gradient.addColorStop(0, `${color}90`);
-                        gradient.addColorStop(1, `${color}10`);
-                        return gradient;
-                    },
-                    borderWidth: 2,
-                    tension: 0.4,
-                    pointRadius: 0,
-                    fill: true,
-                },
-            ],
-        };
+        const minValue = Math.min(...data);
+        const maxValue = Math.max(...data);
+        const range = maxValue - minValue;
+        const stepX = width / (data.length - 1);
 
-        return (
-            <div className={`rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.01] bg-gradient-to-br from-white to-${color}-100 transform rotate-3`}>
-                <div className="p-6">
-                    <p className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-1">{label}</p>
-                    <p className="text-3xl font-semibold text-gray-800">{value}</p>
-                </div>
-                <div className="relative py-2 px-6">
-                    <div
-                        className="absolute inset-0 bg-white opacity-10 transform translate-y-2 rounded-full blur-md"
-                        style={{ WebkitFilter: 'blur(10px)', filter: 'blur(10px)' }}
-                    />
-                    <Line key={`${label}-${color}-${JSON.stringify(trendData)}`} data={chartData} options={chartOptions} />
-                </div>
-            </div>
-        );
+        let path = `M0 ${height - (data[0] - minValue) / (range === 0 ? 1 : range) * height}`;
+
+        for (let i = 1; i < data.length; i++) {
+            const y = height - (data[i] - minValue) / (range === 0 ? 1 : range) * height;
+            path += ` L${i * stepX} ${y}`;
+        }
+
+        return `<path d="${path}" stroke="${color}" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />`;
     };
 
-    const QuickAction = ({ label, icon, onClick, color = 'yellow' }) => (
+    const OverviewCard = ({ label, value, trendData, color, icon }) => (
+        <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg border border-gray-100">
+            <div className={`px-6 py-5 flex items-center space-x-5 bg-${color}-50 bg-opacity-10`}>
+                <div className={`p-3 rounded-md text-white bg-${color}-400 shadow`}>
+                    {React.cloneElement(icon, { className: 'h-6 w-6' })}
+                </div>
+                <p className="text-lg font-medium text-gray-800">{label}</p>
+            </div>
+            <div className="p-6 flex flex-col justify-center items-start">
+                <p className="text-3xl font-semibold text-gray-900 mb-2">{value}</p>
+                <div className="w-full relative overflow-hidden h-8">
+                    <svg viewBox={`0 0 100 30`} className="absolute inset-0 w-full h-full opacity-80">
+                        {generateSVGPath(trendData, color)}
+                    </svg>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-100 to-transparent opacity-20"></div>
+                </div>
+                <p className="mt-1 text-sm text-gray-500">Last 7 days trend</p>
+            </div>
+        </div>
+    );
+
+    const QuickAction = ({ label, icon, onClick, color = 'amber' }) => (
         <button
             onClick={onClick}
-            className={`inline-flex items-center px-4 py-2 rounded-md shadow-sm text-sm font-medium text-gray-700
-                        bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2
-                        focus:ring-${color}-500 transition-all duration-200 border border-gray-200`}
+            className={`relative overflow-hidden inline-flex items-center px-5 py-3 rounded-md font-medium text-white shadow-sm transition-all duration-300
+                            bg-${color}-500 hover:bg-${color}-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-${color}-500`}
         >
-            {React.cloneElement(icon, { className: '-ml-1 mr-2 h-5 w-5 text-gray-400' })}
-            {label}
+            <span className="absolute left-0 top-0 h-full w-1 bg-white bg-opacity-20"></span>
+            {React.cloneElement(icon, { className: '-ml-1 mr-2 h-5 w-5' })}
+            <span className="text-sm">{label}</span>
+            <span className="absolute right-0 top-0 h-full w-1 bg-white bg-opacity-20"></span>
         </button>
     );
 
-    const lottieOptions = {
+    const DashboardHeader = () => (
+        <div className="mb-8 flex justify-between items-center">
+            <div>
+                <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                    <span className="text-amber-500">Admin</span> Hub
+                </h2>
+                <p className="mt-1 text-md text-gray-500">Your central command for managing content and community.</p>
+            </div>
+            <div className="flex items-center space-x-3">
+                <button className="relative inline-flex items-center px-3 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    <ChartBarIcon className="h-5 w-5 mr-2 text-indigo-500" />
+                    Analytics
+                </button>
+                <button className="relative inline-flex items-center px-3 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    <LightBulbIcon className="h-5 w-5 mr-2 text-yellow-500" />
+                    Suggestions
+                </button>
+                <Link to="/admin/profile" className="relative inline-flex items-center px-3 py-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    <UserCircleIcon className="h-7 w-7" />
+                </Link>
+            </div>
+        </div>
+    );
+
+    const loadingOptions = {
         loop: true,
         autoplay: true,
         animationData: loadingAnimation,
@@ -158,24 +145,28 @@ const DashboardPage = () => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center min-h-screen bg-gray-100">
-                <Lottie options={lottieOptions} height={200} width={200} />
+            <div className="flex justify-center items-center min-h-screen bg-gray-50">
+                <Lottie options={loadingOptions} height={180} width={180} />
+                <p className="text-gray-500 text-lg ml-6 italic">Summoning the data spirits...</p>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="flex justify-center items-center min-h-screen bg-gray-100">
-                <div className="bg-white shadow-md rounded-lg p-6">
-                    <p className="text-red-500 text-lg">{error}</p>
+            <div className="flex justify-center items-center min-h-screen bg-gray-50">
+                <div className="bg-white shadow-lg rounded-xl p-8 text-center">
+                    <svg className="mx-auto h-12 w-12 text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938-4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 12c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <p className="text-red-500 text-lg mb-4">Hiccups occurred: {error}</p>
                     <button
                         onClick={() => setError(null)}
-                        className="mt-4 px-5 py-3 bg-red-500 text-white rounded-md hover:bg-red-600
+                        className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600
                                     focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500
                                     transition-all duration-300"
                     >
-                        Dismiss
+                        Retry Connection
                     </button>
                 </div>
             </div>
@@ -183,91 +174,101 @@ const DashboardPage = () => {
     }
 
     return (
-        <div className="bg-gray-100 min-h-screen p-8">
-            <div className="max-w-7xl mx-auto">
-                <h2 className="text-3xl font-semibold text-gray-800 mb-6 tracking-tight">Admin Dashboard</h2>
+        <div className="bg-gradient-to-br from-gray-50 to-indigo-100 bg-opacity-80 min-h-screen py-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <DashboardHeader />
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mb-10">
                     <OverviewCard
-                        label="Posts"
+                        label="Published Articles"
                         value={totalArticles}
                         trendData={postsTrendData}
                         color="blue"
+                        icon={<NewspaperIcon />}
                     />
                     <OverviewCard
-                        label="Drafts"
+                        label="Awaiting Review"
                         value={draftsCount}
                         trendData={draftsTrendData}
-                        color="yellow"
+                        color="amber"
+                        icon={<ArchiveBoxIcon />}
                     />
                     <OverviewCard
-                        label="Sponsors"
+                        label="Supporting Sponsors"
                         value={sponsorsCount}
                         trendData={sponsorsTrendData}
                         color="purple"
+                        icon={<BellAlertIcon />}
                     />
                     <OverviewCard
-                        label="Partners"
+                        label="Strategic Partners"
                         value={partnersCount}
                         trendData={partnersTrendData}
                         color="green"
+                        icon={<UsersIcon />}
                     />
                 </div>
 
-                <div className="bg-white rounded-lg shadow-md p-8 mb-8 border border-gray-200">
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h3>
+                <div className="bg-white rounded-xl shadow-lg p-8 mb-10 border border-gray-100">
+                    <div className="mb-6 flex items-center justify-between">
+                        <h3 className="text-xl font-semibold text-gray-900">
+                            <span className="text-amber-500">Quick</span> Access
+                        </h3>
+                        <span className="text-gray-500 text-sm italic">Your shortcuts to key actions.</span>
+                    </div>
                     <div className="flex flex-wrap gap-4">
-                        <QuickAction label="Add New Article" icon={<PlusIcon />} onClick={handleAddNewArticle} color="indigo" />
+                        <QuickAction label="Compose Article" icon={<PlusIcon />} onClick={handleAddNewArticle} color="amber" />
                         <Link
                             to="/admin/categories"
-                            className="inline-flex items-center px-4 py-2 border border-gray-200 rounded-md shadow-sm
-                                        text-sm font-medium text-gray-700 bg-white hover:bg-gray-50
-                                        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
-                                        transition-all duration-200"
+                            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all duration-300"
                         >
-                            <TagIcon className="-ml-1 mr-2 h-5 w-5 text-gray-400" />
-                            Manage Categories
+                            <TagIcon className="-ml-1 mr-2 h-5 w-5" />
+                            Manage Tags
                         </Link>
                         <Link
                             to="/admin/articles/drafts"
-                            className="inline-flex items-center px-4 py-2 border border-gray-200 rounded-md shadow-sm
-                                        text-sm font-medium text-gray-700 bg-white hover:bg-gray-50
-                                        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
-                                        transition-all duration-200"
+                            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all duration-300"
                         >
-                            <ArchiveBoxIcon className="-ml-1 mr-2 h-5 w-5 text-gray-400" />
-                            View Drafts
+                            <ArchiveBoxIcon className="-ml-1 mr-2 h-5 w-5" />
+                            Review Queue
                         </Link>
                         <Link
                             to="/admin/sponsors"
-                            className="inline-flex items-center px-4 py-2 border border-gray-200 rounded-md shadow-sm
-                                        text-sm font-medium text-gray-700 bg-white hover:bg-gray-50
-                                        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
-                                        transition-all duration-200"
+                            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all duration-300"
                         >
-                            <BellAlertIcon className="-ml-1 mr-2 h-5 w-5 text-gray-400" />
-                            Manage Sponsors
+                            <BellAlertIcon className="-ml-1 mr-2 h-5 w-5" />
+                            Sponsor Relations
                         </Link>
                         <Link
                             to="/admin/partners"
-                            className="inline-flex items-center px-4 py-2 border border-gray-200 rounded-md shadow-sm
-                                        text-sm font-medium text-gray-700 bg-white hover:bg-gray-50
-                                        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
-                                        transition-all duration-200"
+                            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all duration-300"
                         >
-                            <UsersIcon className="-ml-1 mr-2 h-5 w-5 text-gray-400" />
-                            Manage Partners
+                            <UsersIcon className="-ml-1 mr-2 h-5 w-5" />
+                            Partner Network
                         </Link>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-md p-8 border border-gray-200">
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4">Today's Tasks</h3>
+                <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
+                    <div className="mb-6">
+                        <h3 className="text-xl font-semibold text-gray-900">
+                            <span className="text-amber-500">Focus</span> Insights
+                        </h3>
+                        <span className="text-gray-500 text-sm italic">A curated view of your key activities.</span>
+                    </div>
                     <ul className="list-disc list-inside text-gray-700 leading-relaxed">
-                        <li><span className="font-semibold text-gray-800">Review pending drafts:</span> Ensure all submitted articles are reviewed and ready for publishing.</li>
-                        <li><span className="font-semibold text-gray-800">Engage with new inquiries:</span> Check for new messages from potential sponsors or partners and respond promptly.</li>
-                        <li><span className="font-semibold text-gray-800">Analyze recent performance:</span> Use analytics tools to understand how recent articles are performing and identify areas for improvement.</li>
-                        <li><span className="font-semibold text-gray-800">Plan upcoming content:</span> Brainstorm and outline ideas for the next set of articles to maintain a consistent publishing schedule.</li>
+                        <li className="mb-2">
+                            <span className="font-semibold text-amber-500">Content Pipeline:</span> Track the progress of articles from ideation to publication.
+                        </li>
+                        <li className="mb-2">
+                            <span className="font-semibold text-amber-500">Engagement Metrics:</span> Monitor reader interaction and feedback on your latest content.
+                        </li>
+                        <li className="mb-2">
+                            <span className="font-semibold text-amber-500">Community Growth:</span> Observe the expansion of your partner and sponsor network.
+                        </li>
+                        <li>
+                            <span className="font-semibold text-amber-500">System Health:</span> Stay informed about any alerts or issues requiring your attention.
+                        </li>
                     </ul>
                 </div>
             </div>
